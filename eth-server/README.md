@@ -40,4 +40,19 @@ A standalone microservice for Ethereum blockchain operations (wallet creation, b
 
 ## Wallet-Service Sync
 - On startup, eth-server fetches user addresses, contract addresses, and admin info from wallet-service via REST API.
-- Configure wallet-service URL and API key via `WALLET_SERVICE_URL` and `WALLET_SERVICE_API_KEY` environment variables. 
+- Configure wallet-service URL and API key via `WALLET_SERVICE_URL` and `WALLET_SERVICE_API_KEY` environment variables.
+
+## Environment Variables
+
+This project uses [dotenv](https://www.npmjs.com/package/dotenv) to manage environment variables. Create a `.env` file in the `eth-server` directory with the following example content:
+
+```
+PORT=3000
+ETH_SERVER_API_KEY=your-api-key
+KAFKA_BROKER=localhost:9092
+KAFKA_DEPOSIT_TOPIC=deposit-events
+REDIS_URL=redis://localhost:6379
+ETH_NODE_URL=https://mainnet.infura.io/v3/YOUR_INFURA_PROJECT_ID
+```
+
+Adjust the values as needed for your environment. 

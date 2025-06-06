@@ -1,3 +1,5 @@
+import dotenv from 'dotenv';
+dotenv.config();
 import express from 'express';
 import router from './routes';
 import { connectProducer } from './kafka';
@@ -62,5 +64,9 @@ async function start() {
     process.exit(1);
   }
 }
+
+// To run the deposit event worker, use:
+// bun run src/depositWorker.ts
+// This should be run as a separate process for production reliability.
 
 start(); 
