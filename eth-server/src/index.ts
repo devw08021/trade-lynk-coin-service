@@ -2,7 +2,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 import express from 'express';
 import router from './routes';
-import { connectProducer } from './kafka';
+import { connectEventProcessor } from './eventProcessor';
 import { connectRedis } from './redisStore';
 import { syncFromWalletService } from './walletServiceSync';
 import { startBlockScanner } from './blockScanner';
@@ -26,12 +26,12 @@ app.get('/metrics', async (req, res) => {
 
 // API Key Auth Middleware
 const API_KEY = process.env.ETH_SERVER_API_KEY;
-app.use((req, res, next) => {
-  if (!API_KEY) return next(); // No auth if not set
-  const key = req.header('x-api-key');
-  if (key !== API_KEY) return res.status(401).json({ error: 'Unauthorized' });
-  next();
-});
+// app.use((req, res, next) => {
+//   if (!API_KEY) return next(); // No auth if not set
+//   const key = req.header('x-api-key');
+//   if (key !== API_KEY) return res.status(401).json({ error: 'Unauthorized' });
+//   next();
+// });
 
 // Rate limiting for sensitive endpoints
 const sensitiveLimiter = rateLimit({
@@ -52,8 +52,8 @@ const PORT = process.env.PORT || 3000;
 async function start() {
   try {
     await connectRedis();
-    await syncFromWalletService();
-    await connectProducer();
+    // await syncFromWalletService();
+    // await connectEventProcessor((process.env.PROCESSOR || 'KAFKA') as 'KAFKA' | 'API');
     app.listen(PORT, () => {
       console.log(`eth-server listening on port ${PORT}`);
       startBlockScanner().then(() => console.log('Block scanner started.'));
@@ -61,7 +61,7 @@ async function start() {
   } catch (err) {
     const msg = (err as Error).message;
     console.error('Failed to initialize service:', msg);
-    process.exit(1);
+    // process.exit(1);
   }
 }
 

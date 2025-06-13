@@ -1,12 +1,12 @@
 import Web3 from 'web3';
 import { listUserAddresses, listContractAddresses } from './redisStore';
-import { depositQueue } from './depositQueue';
+import { sendDepositEvent } from './eventProcessor';
 
 const ETH_NODE_URL = process.env.ETH_NODE_URL || 'https://mainnet.infura.io/v3/YOUR_INFURA_PROJECT_ID';
 console.log('ETH_NODE_URL', ETH_NODE_URL);
 const web3 = new Web3(ETH_NODE_URL);
 
-const POLL_INTERVAL = 3000; // 10 seconds
+const POLL_INTERVAL = 3000; // 3 seconds
 const CONFIRMATIONS = 3;
 
 let lastScannedBlock: number | null = null;
@@ -19,17 +19,20 @@ async function scanBlock(blockNumber: number) {
 
   for (const tx of block.transactions) {
     // ETH deposit
-    // console.log("tx", tx);
     if (tx.to && userAddresses.includes(tx.to.toLowerCase())) {
-      console.log("enqueueing deposit event", tx);
-      await depositQueue.add('deposit', {
-        type: 'ETH',
-        to: tx.to,
-        from: tx.from,
-        amount: Number(web3.utils.fromWei(tx.value, 'ether')),
-        txHash: tx.hash,
-        blockNumber: tx.blockNumber,
-      });
+      console.log("processing deposit event", tx);
+      try {
+        await sendDepositEvent({
+          type: 'ETH',
+          to: tx.to,
+          from: tx.from,
+          amount: Number(web3.utils.fromWei(tx.value, 'ether')),
+          txHash: tx.hash,
+          blockNumber: tx.blockNumber,
+        });
+      } catch (error) {
+        console.error('Failed to process ETH deposit event:', error);
+      }
     }
     // ERC20 deposit
     if (tx.to && contractAddresses.includes(tx.to.toLowerCase()) && tx.input && tx.input.length >= 138) {
@@ -38,15 +41,19 @@ async function scanBlock(blockNumber: number) {
         const to = '0x' + tx.input.slice(34, 74).replace(/^0+/, '');
         const value = web3.utils.toBN('0x' + tx.input.slice(74));
         if (userAddresses.includes(to.toLowerCase())) {
-          await depositQueue.add('deposit', {
-            type: 'ERC20',
-            contract: tx.to,
-            to,
-            from: tx.from,
-            amount: Number(web3.utils.fromWei(value, 'ether')),
-            txHash: tx.hash,
-            blockNumber: tx.blockNumber,
-          });
+          try {
+            await sendDepositEvent({
+              type: 'ERC20',
+              contract: tx.to,
+              to,
+              from: tx.from,
+              amount: Number(web3.utils.fromWei(value, 'ether')),
+              txHash: tx.hash,
+              blockNumber: tx.blockNumber,
+            });
+          } catch (error) {
+            console.error('Failed to process ERC20 deposit event:', error);
+          }
         }
       }
     }

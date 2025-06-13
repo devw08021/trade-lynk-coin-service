@@ -8,6 +8,7 @@ const ethService = new EthService();
 router.post('/wallet', async (req, res) => {
   try {
     const wallet = await ethService.createWallet();
+    console.log("wallet", wallet);
     res.json(wallet);
   } catch (err) {
     res.status(500).json({ error: (err as Error).message });

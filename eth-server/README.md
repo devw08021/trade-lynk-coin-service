@@ -12,7 +12,7 @@ A standalone microservice for Ethereum blockchain operations (wallet creation, b
 ## Usage
 - Install dependencies: `npm install`
 - Run in dev mode: `npm run dev`
-- Build: `npm run build`
+- Build: `npm build`
 - Start: `npm start`
 
 ## API Endpoints
@@ -30,9 +30,17 @@ A standalone microservice for Ethereum blockchain operations (wallet creation, b
 - `POST /admin` - Set admin address and private key (body: { address, privateKey })
 - `GET /admin` - Get admin address (never exposes private key)
 
-## Kafka Integration
+## Event Processing
+The service supports two modes of event processing for deposit events:
+
+### Kafka Processing (Default)
 - Produces deposit events to the `deposit-events` topic when a deposit is detected.
 - Configure Kafka via `KAFKA_BROKER` and `KAFKA_DEPOSIT_TOPIC` environment variables.
+
+### API Processing
+- Sends deposit events to a configured API endpoint.
+- Configure API processing via `API_ENDPOINT` and `API_KEY` environment variables.
+- Set `PROCESSOR=API` to use API processing instead of Kafka.
 
 ## Redis Storage
 - User addresses, contract addresses, and admin info are stored in Redis for persistence.
@@ -49,9 +57,16 @@ This project uses [dotenv](https://www.npmjs.com/package/dotenv) to manage envir
 ```
 PORT=3000
 ETH_SERVER_API_KEY=your-api-key
+PROCESSOR=KAFKA  # or API
+# Kafka Configuration
 KAFKA_BROKER=localhost:9092
 KAFKA_DEPOSIT_TOPIC=deposit-events
+# API Configuration
+API_ENDPOINT=http://localhost:3001/api/events
+API_KEY=your-api-key
+# Redis Configuration
 REDIS_URL=redis://localhost:6379
+# Ethereum Node Configuration
 ETH_NODE_URL=https://mainnet.infura.io/v3/YOUR_INFURA_PROJECT_ID
 ```
 
